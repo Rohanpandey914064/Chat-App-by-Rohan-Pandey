@@ -34,5 +34,7 @@ app.get("/health", (req, res) => {
 
 app.listen(PORT, ()=> {
     connectDB();
-    console.log(`Rohan bhaiya ka server running on port number ${PORT} or kya bas`)
+    console.log(`Rohan bhaiya ka server running on port number ${PORT} or kya bas`);
+
+    if(process.env.NODE_ENV === "production") job.start();
 });
