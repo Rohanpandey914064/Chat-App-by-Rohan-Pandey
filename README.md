@@ -1,131 +1,237 @@
-# Chatting App - Full Stack Real-Time Chat Application
+﻿# 💬 ChatApp — Real-Time Full-Stack Messaging
 
-A modern real-time chat application built with React, Express.js, Socket.io, and MongoDB. Features authentication via Clerk, real-time messaging with WebSocket support, and media sharing capabilities.
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-4-010101?logo=socket.io&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Multistage-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-ISC-blue)
 
-## 🚀 Features
+A production-ready, real-time chat application built as a **monolithic Docker image** — Vite SPA served by the same Express server that powers the API and WebSocket layer.
 
-- **Real-time Messaging**: Instant message delivery using Socket.io
-- **User Authentication**: Secure authentication via Clerk
-- **Online Status**: See which users are currently online
-- **Media Sharing**: Upload and share images and videos
-- **Conversation History**: Browse and load message history
-- **Responsive Design**: Beautiful UI with HeroUI components and Tailwind CSS
-- **Dark/Light Theme**: Customizable theme with wallpaper backgrounds
-- **Production Ready**: Docker support for easy deployment
+---
 
-## 📋 Tech Stack
+## ✨ Features
+
+| Category | Details |
+|---|---|
+| 💬 **Real-time Messaging** | Instant delivery via Socket.io WebSockets |
+| 🔐 **Authentication** | Passwordless auth powered by [Clerk](https://clerk.com) |
+| 🟢 **Online Presence** | Live online/offline status for all users |
+| 🖼️ **Media Sharing** | Upload and share images & videos (ImageKit CDN) |
+| 📜 **Message History** | Paginated conversation history from MongoDB |
+| 🎨 **Themed UI** | Dark/light mode + wallpaper backgrounds via HeroUI |
+| 🐳 **Docker Ready** | 3-stage optimised build, ships a lean runtime image |
+| ⏰ **Health Cron** | Self-ping every 14 min — keeps free-tier hosts awake |
+
+---
+
+## 🏗️ Architecture
+
+```
+Browser
+  │
+  │  HTTP (static SPA + /api/*)
+  ▼
+Express (port 3001)
+  ├── /api/auth/*      → Clerk JWT validation
+  ├── /api/messages/*  → Message & user controllers
+  ├── /health          → Health check
+  ├── /webhooks/clerk  → Clerk user sync webhook
+  ├── Socket.io        → Real-time events (message, online users)
+  └── /public          → Vite-built static files
+        │
+        └── React SPA (React 19, HeroUI, Zustand, React Router)
+
+MongoDB Atlas  ←→  Mongoose ODM
+ImageKit CDN   ←→  Multer upload middleware
+```
+
+---
+
+## 📦 Tech Stack
 
 ### Frontend
-- **React 19** - UI framework
-- **Vite** - Fast build tool
-- **Tailwind CSS** - Styling
-- **HeroUI** - Component library
-- **Socket.io Client** - Real-time communication
-- **Zustand** - State management
-- **Clerk** - Authentication
-- **React Router** - Routing
-- **Axios** - HTTP client
+| Package | Version | Purpose |
+|---|---|---|
+| React | 19 | UI framework |
+| Vite | 8 | Build tool (Rolldown bundler) |
+| Tailwind CSS | 4 | Utility-first styling |
+| HeroUI | 3 | Component library |
+| Socket.io-client | 4 | Real-time communication |
+| Zustand | 5 | Global state management |
+| Clerk React | 6 | Authentication UI |
+| React Router | 8 | Client-side routing |
+| Axios | 1 | HTTP client |
+| Lucide React | — | Icon set |
 
 ### Backend
-- **Express.js 5** - Node.js framework
-- **Socket.io** - WebSocket server
-- **MongoDB** - Database
-- **Mongoose** - ODM
-- **Multer** - File upload handling
-- **Clerk** - Authentication
-- **ImageKit** - Media storage (optional)
-- **Node Cron** - Scheduled tasks
+| Package | Version | Purpose |
+|---|---|---|
+| Express | 5 | HTTP server & API |
+| Socket.io | 4 | WebSocket server |
+| Mongoose | 9 | MongoDB ODM |
+| @clerk/express | 2 | Server-side JWT auth |
+| Multer | 2 | File upload middleware |
+| @imagekit/nodejs | 7 | Media CDN uploads |
+| cron | 4 | Scheduled health pings |
+| dotenv | 17 | Environment config |
 
-## 📦 Installation
+---
+
+## 🚀 Quick Start (Local Development)
 
 ### Prerequisites
-- Node.js 20+
-- MongoDB (local or cloud)
-- Clerk account (https://clerk.com)
 
-### Environment Setup
+- **Node.js** ≥ 20
+- **MongoDB** — local instance or [MongoDB Atlas](https://www.mongodb.com/atlas)
+- **Clerk** account — [clerk.com](https://clerk.com) (free tier works)
 
-1. **Backend Environment** 
-   ```bash
-   cd Backend
-   cp .env.example .env
-   ```
-   Configure with your values:
-   - `MONGO_URI`: MongoDB connection string
-   - `CLERK_WEBHOOK_SIGNING_SECRET`: From Clerk dashboard
-   - Optional: ImageKit keys for media uploads
-
-2. **Frontend Environment**
-   ```bash
-   cd Frontend
-   cp .env.example .env
-   ```
-   Configure:
-   - `VITE_CLERK_PUBLISHABLE_KEY`: From Clerk dashboard
-
-### Installation
+### 1 — Clone & install
 
 ```bash
-# Backend
-cd Backend
-npm install
+git clone <your-repo-url>
+cd chatting-app
 
-# Frontend (in another terminal)
-cd Frontend
-npm install
+# Backend
+cd Backend && npm install
+
+# Frontend (new terminal)
+cd ../Frontend && npm install
 ```
 
-## 🏃 Running Locally
+### 2 — Configure environment variables
 
-### Development Mode
+**Backend** — create `Backend/.env`:
 
-**Terminal 1 - Backend:**
+```env
+# Required
+MONGO_URI=mongodb://localhost:27017/chatting-app
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxxxxxxxxxxxx
+
+# Optional (defaults shown)
+PORT=3000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# Optional — ImageKit media CDN
+IMAGEKIT_PUBLIC_KEY=
+IMAGEKIT_PRIVATE_KEY=
+IMAGEKIT_URL_ENDPOINT=
+```
+
+**Frontend** — create `Frontend/.env`:
+
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+
+# Leave empty in production (API is on the same host)
+VITE_API_URL=http://localhost:3000
+```
+
+### 3 — Run in development
+
 ```bash
+# Terminal 1 — API server (http://localhost:3000)
 cd Backend
 npm run dev
-```
-Runs on http://localhost:3000
 
-**Terminal 2 - Frontend:**
-```bash
+# Terminal 2 — Vite dev server (http://localhost:5173)
 cd Frontend
 npm run dev
 ```
-Runs on http://localhost:5173
 
-### Production Build
+> The frontend proxies `/api` and socket traffic to the backend automatically.
 
-```bash
-# Backend
-cd Backend
-npm run build
-npm start
-
-# Frontend
-cd Frontend
-npm run build
-npm run preview
-```
+---
 
 ## 🐳 Docker Deployment
 
-Build and run with Docker:
+The included `Dockerfile` uses a **3-stage build**:
+
+| Stage | Base image | What it does |
+|---|---|---|
+| `frontend-build` | `node:22-bookworm-slim` | Installs deps, runs `vite build` |
+| `backend-build` | `node:22-bookworm-slim` | Installs deps, copies `src/` → `dist/` |
+| `runner` | `node:22-bookworm-slim` | Prod-only deps + built assets, exposes **3001** |
+
+### Build the image
 
 ```bash
-# Build image
-docker build -t chatting-app:latest \
-  --build-arg VITE_CLERK_PUBLISHABLE_KEY=your_key_here \
+docker build \
+  --build-arg VITE_CLERK_PUBLISHABLE_KEY=pk_live_xxxxxxxxx \
+  -t chatting-app:latest \
   .
+```
 
-# Run container
+### Run the container
+
+```bash
 docker run -d \
   -p 3001:3001 \
-  -e MONGO_URI=your_mongodb_uri \
-  -e CLERK_WEBHOOK_SIGNING_SECRET=your_secret \
+  -e MONGO_URI="mongodb+srv://user:pass@cluster.mongodb.net/chatapp" \
+  -e CLERK_WEBHOOK_SIGNING_SECRET="whsec_xxxxxxxxx" \
   -e NODE_ENV=production \
-  -e FRONTEND_URL=https://yourdomain.com \
+  -e FRONTEND_URL="https://yourdomain.com" \
+  --name chatting-app \
   chatting-app:latest
 ```
+
+The app will be available at **http://localhost:3001**.
+
+---
+
+## ☁️ Deploy to Render
+
+1. Push your code to GitHub.
+2. Create a new **Web Service** on [Render](https://render.com).
+3. Set **Environment** → `Docker`.
+4. Add the following **Build-time** argument:
+   - `VITE_CLERK_PUBLISHABLE_KEY` = your Clerk publishable key
+5. Add the following **Environment Variables** (runtime):
+
+   | Key | Value |
+   |---|---|
+   | `MONGO_URI` | Your MongoDB Atlas connection string |
+   | `CLERK_WEBHOOK_SIGNING_SECRET` | From Clerk dashboard → Webhooks |
+   | `NODE_ENV` | `production` |
+   | `FRONTEND_URL` | Your Render service URL |
+
+6. Set the **Health Check Path** to `/health`.
+
+> See [DEPLOYMENT.md](DEPLOYMENT.md) for the full step-by-step checklist.
+
+---
+
+## 🔌 API Reference
+
+### Auth
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/auth/check` | Returns authenticated user profile |
+
+### Messages
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/messages/users` | List all registered users |
+| `GET` | `/api/messages/conversations` | List your active conversations |
+| `GET` | `/api/messages/:userId` | Fetch message history with a user |
+| `POST` | `/api/messages/send/:userId` | Send a message (text / media) |
+
+### System
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/health` | Health check — returns `200 OK` |
+| `POST` | `/webhooks/clerk` | Clerk user-sync webhook (Svix signed) |
+
+### Socket.io Events
+| Event | Direction | Payload |
+|---|---|---|
+| `newMessage` | Server → Client | Message object |
+| `getOnlineUsers` | Server → Client | `string[]` of online user IDs |
+
+---
 
 ## 📁 Project Structure
 
@@ -133,113 +239,81 @@ docker run -d \
 chatting-app/
 ├── Backend/
 │   ├── src/
-│   │   ├── index.js              # Main server entry
-│   │   ├── controllers/          # Route handlers
-│   │   ├── routes/               # API routes
-│   │   ├── middleware/           # Custom middleware
-│   │   ├── models/               # Mongoose schemas
-│   │   ├── lib/                  # Utilities (socket, db, etc)
+│   │   ├── index.js              # Server entry — Express + Socket.io setup
+│   │   ├── controllers/          # Business logic (auth, messages)
+│   │   ├── routes/               # Route definitions
+│   │   ├── middleware/           # Auth guards, upload handling
+│   │   ├── models/               # Mongoose schemas (User, Message)
+│   │   ├── lib/                  # DB connection, Socket.io singleton
 │   │   └── webhooks/             # Clerk webhook handler
-│   ├── scripts/build.js          # Build script
+│   ├── scripts/build.js          # Custom build script (copies src → dist)
 │   └── package.json
 │
 ├── Frontend/
 │   ├── src/
 │   │   ├── main.jsx              # React entry point
-│   │   ├── App.jsx               # Root component
-│   │   ├── pages/                # Page components
-│   │   ├── components/           # Reusable components
-│   │   ├── store/                # Zustand stores
-│   │   ├── context/              # React context
-│   │   ├── lib/                  # Utilities
-│   │   ├── hooks/                # Custom hooks
-│   │   └── data/                 # Static data
-│   ├── public/                   # Static files
-│   ├── vite.config.js
+│   │   ├── App.jsx               # Root component + route tree
+│   │   ├── pages/                # Route-level page components
+│   │   ├── components/           # Reusable UI components
+│   │   ├── store/                # Zustand state stores
+│   │   ├── context/              # React context providers
+│   │   ├── hooks/                # Custom React hooks
+│   │   ├── lib/                  # Axios instance, utilities
+│   │   ├── data/                 # Static data / constants
+│   │   └── styles/               # Global CSS / theme tokens
+│   ├── public/                   # Static assets (favicon, etc.)
+│   ├── vite.config.js            # Vite + Rolldown build config
 │   └── package.json
 │
-├── Dockerfile                    # Multi-stage Docker build
+├── Dockerfile                    # Multi-stage production build
 ├── .dockerignore
-├── DEPLOYMENT.md                 # Deployment guide
+├── DEPLOYMENT.md                 # Render / Docker deployment guide
 └── README.md
 ```
 
-## 🔧 API Endpoints
+---
 
-### Authentication
-- `GET /api/auth/check` - Check authentication status
+## 🔐 Security
 
-### Messages
-- `GET /api/messages/users` - Get all users
-- `GET /api/messages/conversations` - Get conversations
-- `GET /api/messages/:id` - Get messages with user
-- `POST /api/messages/send/:id` - Send message
-
-### Health
-- `GET /health` - Health check endpoint
-
-## 🎯 Environment Variables
-
-### Backend (.env)
-```
-MONGO_URI=mongodb://localhost:27017/chatting-app
-PORT=3000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-CLERK_WEBHOOK_SIGNING_SECRET=your_secret
-IMAGEKIT_PUBLIC_KEY=optional
-IMAGEKIT_PRIVATE_KEY=optional
-IMAGEKIT_URL_ENDPOINT=optional
-```
-
-### Frontend (.env)
-```
-VITE_CLERK_PUBLISHABLE_KEY=your_key
-VITE_API_URL=           # Empty for same-host in production
-```
-
-## 🔐 Security Features
-
-- JWT authentication via Clerk
-- CORS protection
-- Secure WebSocket connections
-- File upload validation
-- Rate limiting ready
-- Environment variable management
-- Webhook signature verification
-
-## 🚨 Common Issues & Solutions
-
-| Issue | Solution |
-|-------|----------|
-| Port 3000 already in use | Change `PORT` env variable |
-| MongoDB connection error | Verify `MONGO_URI` and MongoDB is running |
-| Clerk auth not working | Check `CLERK_WEBHOOK_SIGNING_SECRET` matches |
-| WebSocket connection fails | Verify `FRONTEND_URL` matches deployment domain |
-| Image upload not working | Set `IMAGEKIT_*` environment variables |
-
-## 📊 Performance Notes
-
-- Frontend: Vite with code splitting and optimization
-- Backend: Express with static file caching
-- Database: MongoDB with indexed queries
-- WebSocket: Socket.io with connection pooling
-- Cron Job: Health check every 14 minutes
-
-## 🤝 Contributing
-
-Feel free to submit issues and enhancement requests!
-
-## 📜 License
-
-ISC
-
-## 📞 Support
-
-For deployment help, see [DEPLOYMENT.md](DEPLOYMENT.md)
-
-For development questions, check the code comments and structure.
+- **Clerk JWT** validation on every protected API route
+- **Webhook signature verification** via Svix (prevents spoofed user events)
+- **CORS** locked to `FRONTEND_URL` in production
+- **File upload validation** through Multer (type & size limits)
+- **Non-root Docker user** — container runs as `node` user
+- Environment secrets never baked into the image at runtime
 
 ---
 
-**Ready to Deploy?** Check out [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+## 🐛 Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---|---|---|
+| `EADDRINUSE: port 3000` | Another process on the port | Set a different `PORT` in `.env` |
+| `MongoServerSelectionError` | Bad connection string or IP not whitelisted | Check `MONGO_URI`; whitelist your IP in Atlas |
+| Clerk redirects loop | Wrong publishable key | Verify `VITE_CLERK_PUBLISHABLE_KEY` |
+| Webhook 400 errors | Wrong signing secret | Copy secret from Clerk → Webhooks tab |
+| WebSocket disconnects | `FRONTEND_URL` mismatch | Set `FRONTEND_URL` to exact deployed domain |
+| Images not uploading | ImageKit keys missing | Add `IMAGEKIT_*` env vars |
+| Docker build fails (`@react-aria/utils`) | Missing peer dependency | Ensure `@react-aria/utils` is in `package.json`, then re-run `npm install` |
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Commit your changes: `git commit -m 'feat: add my feature'`
+4. Push to the branch: `git push origin feat/my-feature`
+5. Open a Pull Request
+
+---
+
+## 📜 License
+
+Distributed under the **ISC License**.
+
+---
+
+<div align="center">
+  <strong>Ready to deploy?</strong> Follow the step-by-step guide in <a href="DEPLOYMENT.md">DEPLOYMENT.md</a>
+</div>

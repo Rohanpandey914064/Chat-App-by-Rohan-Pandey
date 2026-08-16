@@ -10,4 +10,21 @@ export default defineConfig({
     tailwindcss(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  build: {
+    // Raise the chunk size warning threshold to 1 MB
+    chunkSizeWarningLimit: 1000,
+    rolldownOptions: {
+      onwarn(warning, warn) {
+        // Suppress unresolved import warnings for known peer deps
+        // that are handled at runtime by the host environment
+        if (
+          warning.code === 'UNRESOLVED_IMPORT' &&
+          warning.message?.includes('@react-aria/utils')
+        ) {
+          return
+        }
+        warn(warning)
+      },
+    },
+  },
 })
