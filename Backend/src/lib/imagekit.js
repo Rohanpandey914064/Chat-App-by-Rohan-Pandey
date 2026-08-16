@@ -1,3 +1,4 @@
+import "dotenv/config";
 import ImageKit, { toFile } from "@imagekit/nodejs";
 
 const hasRequiredConfig = Boolean(
