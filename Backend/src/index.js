@@ -9,6 +9,7 @@ import {connectDB} from "./lib/db.js";
 import { clerkMiddleware } from '@clerk/express'
 import job from "./lib/cron.js";
 import clerkWebhook from "./webhooks/clerk.webhook.js";
+import authRouter from "./routes/auth.route.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -34,6 +35,7 @@ if(fs.existsSync(publicDir)) {
 app.get("/health", (req, res) => {
     res.status(200).json({ message: "Server mast chal raha hai" });
 });
+app.use("/api/auth", authRouter);
 
 app.listen(PORT, ()=> {
     connectDB();
