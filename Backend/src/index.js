@@ -10,6 +10,7 @@ import { clerkMiddleware } from '@clerk/express'
 import job from "./lib/cron.js";
 import clerkWebhook from "./webhooks/clerk.webhook.js";
 import authRouter from "./routes/auth.route.js";
+import messageRouter from "./routes/message.route.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -36,10 +37,12 @@ app.get("/health", (req, res) => {
     res.status(200).json({ message: "Server mast chal raha hai" });
 });
 app.use("/api/auth", authRouter);
+app.use("/api/messages", messageRouter);
 
-app.listen(PORT, ()=> {
-    connectDB();
+app.listen(PORT, async () => {
+    const dbConnected = await connectDB();
     console.log(`Rohan bhaiya ka server running on port number ${PORT} or kya bas`);
+    console.log(dbConnected ? "Database connected successfully" : "Database is unavailable; server is running without MongoDB");
 
     if(process.env.NODE_ENV === "production") job.start();
 });

@@ -4,13 +4,14 @@ export async function connectDB() {
     try {
         const mongoUri = process.env.MONGO_URI;
         if (!mongoUri) {
-            throw new Error("MONGO_URI is required leke aao usko please ");
+            throw new Error("MONGO_URI is required");
         }
 
         const conn = await mongoose.connect(mongoUri);
-        console.log("MongoDB connected",conn.connection.host);
+        console.log("MongoDB connected", conn.connection.host);
+        return true;
     } catch (error) {
         console.error("MongoDB connection error:", error.message);
-        process.exit(1); // Exit the process with failure
+        return false;
     }
 } 
