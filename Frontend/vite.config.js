@@ -19,7 +19,8 @@ export default defineConfig({
         // that are handled at runtime by the host environment
         if (
           warning.code === 'UNRESOLVED_IMPORT' &&
-          warning.message?.includes('@react-aria/utils')
+          (warning.message?.includes('@react-aria/utils') ||
+            warning.message?.includes('@react-aria/ssr'))
         ) {
           return
         }
