@@ -1,16 +1,10 @@
 import { useClerk } from "@clerk/react";
 import { Button } from "@heroui/react";
-import { ArrowRightIcon, ShieldCheckIcon, SparklesIcon } from "lucide-react";
-import { AppLogo } from "../AppLogo";
+import { ArrowRightIcon, ShieldCheckIcon } from "lucide-react";
 import { AuthCardShell } from "./AuthCardShell";
 
 const AFTER_AUTH = "/";
 
-const logoTileClassName = [
-  "relative rounded-2xl bg-linear-to-b from-white to-[#f2f2f7] p-2",
-  "shadow-lg shadow-black/8 ring-1 ring-black/8",
-  "dark:from-[#2c2c2e] dark:to-[#1a1a1c] dark:shadow-black/50 dark:ring-white/12",
-].join(" ");
 
 const continueButtonClassName = [
   "group relative h-13 overflow-hidden rounded-2xl text-[15px] font-semibold",
@@ -26,24 +20,7 @@ export function AuthActionPanel() {
   return (
     <section className="relative flex flex-1 flex-col items-stretch justify-center overflow-hidden px-5 py-12 sm:px-10 md:px-14 md:py-10 lg:px-16">
       <AuthCardShell>
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="relative mb-5">
-            <div
-              aria-hidden
-              className="absolute -inset-3.5 rounded-[20px] bg-linear-to-br from-accent/22 via-accent/8 to-transparent opacity-90 blur-xl dark:from-accent/28 dark:via-accent/10"
-            />
-            <div className={logoTileClassName}>
-              <AppLogo size={52} className="rounded-xl" alt="" />
-            </div>
-          </div>
 
-          <div className="flex items-center justify-center gap-1.5 text-accent">
-            <SparklesIcon className="size-3.5" strokeWidth={2} aria-hidden />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em]">
-              Secure entry
-            </span>
-          </div>
-        </div>
 
         {
           <Button

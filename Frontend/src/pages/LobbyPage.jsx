@@ -10,7 +10,8 @@ import { WallpaperPicker } from "../components/WallpaperPicker";
 import AvailableUserCard from "../components/lobby/AvailableUserCard";
 import IncomingRequestModal from "../components/lobby/IncomingRequestModal";
 import OutgoingRequestBanner from "../components/lobby/OutgoingRequestBanner";
-import { ShieldIcon, UsersIcon, RefreshCwIcon } from "lucide-react";
+import { UsersIcon, RefreshCwIcon } from "lucide-react";
+import { APP_NAME, AppLogo } from "../components/AppLogo";
 import { Button } from "@heroui/react";
 
 function LobbyPage() {
@@ -78,8 +79,8 @@ function LobbyPage() {
         {/* Header */}
         <header className="flex items-center justify-between rounded-2xl border border-border bg-background/80 backdrop-blur px-4 py-3">
           <div className="flex items-center gap-2">
-            <ShieldIcon className="size-5 text-accent" strokeWidth={2} />
-            <span className="text-base font-bold tracking-tight">Anonymous Chat</span>
+            <AppLogo size={28} className="rounded-[7px]" />
+            <span className="text-base font-bold tracking-tight">{APP_NAME}</span>
           </div>
           <div className="flex items-center gap-1">
             <WallpaperPicker />
