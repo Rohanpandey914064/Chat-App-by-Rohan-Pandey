@@ -15,7 +15,7 @@ const imagekit = hasRequiredConfig
     })
   : null;
 
-function hasImageKitConfig() {
+export function hasImageKitConfig() {
   return Boolean(
     process.env.IMAGEKIT_PUBLIC_KEY &&
     process.env.IMAGEKIT_PRIVATE_KEY &&
@@ -25,12 +25,18 @@ function hasImageKitConfig() {
 
 function createFileName(originalName = "upload") {
   const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, "_");
-  return `chat-${Date.now()}-${safeName}`;
+  return `anon-chat-${Date.now()}-${safeName}`;
 }
 
-async function uploadChatMedia(file) {
+/**
+ * Upload a media file to ImageKit.
+ * Returns { url, fileId } — both should be stored on the Message document.
+ */
+export async function uploadChatMedia(file) {
   if (!hasImageKitConfig() || !imagekit) {
-    throw new Error("ImageKit config is missing. Add IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, and IMAGEKIT_URL_ENDPOINT.");
+    throw new Error(
+      "ImageKit config is missing. Add IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, and IMAGEKIT_URL_ENDPOINT."
+    );
   }
 
   const fileName = createFileName(file.originalname);
@@ -38,10 +44,22 @@ async function uploadChatMedia(file) {
   const result = await imagekit.upload({
     file: await toFile(file.buffer, fileName, { type: file.mimetype }),
     fileName,
-    folder: "/chat",
+    folder: "/anon-chat",
   });
 
-  return result.url;
+  return { url: result.url, fileId: result.fileId };
 }
 
-export { uploadChatMedia, hasImageKitConfig };
+/**
+ * Delete a media file from ImageKit by its fileId.
+ * Fire-and-forget safe — logs errors but doesn't throw.
+ */
+export async function deleteMedia(fileId) {
+  if (!hasImageKitConfig() || !imagekit || !fileId) return;
+
+  try {
+    await imagekit.deleteFile(fileId);
+  } catch (err) {
+    console.error("[ImageKit] Failed to delete file:", fileId, err.message);
+  }
+}

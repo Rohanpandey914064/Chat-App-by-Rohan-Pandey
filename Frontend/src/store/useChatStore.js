@@ -1,149 +1,241 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
 import toast from "react-hot-toast";
 
+
 export const useChatStore = create(
   persist(
     (set, get) => ({
-      users: [],
-      conversations: [],
-      messages: [],
-      selectedUser: null,
-      isConversationsLoading: false,
-      isUsersLoading: false,
+      // ── Lobby state
+      availableUsers: [],           // [{ userId, anonymousUsername }]
+      isAvailableUsersLoading: false,
+
+      // ── Request state
+      incomingRequest: null,        // { requestId, fromUsername, fromUserId }
+      outgoingRequest: null,        // { requestId, toUsername }
+
+      // ── Active conversation state
+      activeConversation: null,     // { conversationId, partnerUsername }
+      messages: [],                 // sanitized message objects
       isMessagesLoading: false,
-      activeConversationId: null,
-      searchQuery: "",
-      sidebarTab: "chats",
-      composerText: "",
-      isSoundEnabled: true,
+      isSendingMessage: false,
       isSendingMedia: false,
 
-      getUsers: async () => {
-        set({ isUsersLoading: true });
+      // ── UI state
+      composerText: "",
+      isPartnerTyping: false,
+      isPartnerDisconnected: false,
+      isSoundEnabled: true,
+
+      // ─── Lobby ──────────────────────────────────────────────────────────
+
+      fetchAvailableUsers: async () => {
+        set({ isAvailableUsersLoading: true });
         try {
-          const res = await axiosInstance.get("/messages/users");
-          set((state) => ({
-            users: res.data,
-            selectedUser:
-              state.selectedUser && res.data.some((user) => user._id === state.selectedUser._id)
-                ? state.selectedUser
-                : null,
-          }));
-        } catch (error) {
-          console.log("Error in get Users", error.message);
+          const res = await axiosInstance.get("/users/available");
+          set({ availableUsers: res.data });
+        } catch (err) {
+          console.error("[Chat] fetchAvailableUsers:", err.message);
         } finally {
-          set({ isUsersLoading: false });
+          set({ isAvailableUsersLoading: false });
         }
       },
 
-      getConversations: async () => {
-        set({ isConversationsLoading: true });
+      sendChatRequest: async (receiverId) => {
         try {
-          const res = await axiosInstance.get("/messages/conversations");
-          set({ conversations: res.data });
-        } catch (error) {
-          console.log("Error in getConversations", error.message);
-        } finally {
-          set({ isConversationsLoading: false });
+          const res = await axiosInstance.post("/chat-requests", { receiverId });
+          set({ outgoingRequest: { requestId: res.data.requestId, toUsername: res.data.toUsername } });
+          return true;
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Failed to send request");
+          return false;
         }
       },
 
-      getMessages: async (userId) => {
-        if (!userId) return;
+      cancelOutgoingRequest: () => {
+        // Locally clear — the request will expire server-side via TTL
+        set({ outgoingRequest: null });
+      },
+
+      acceptRequest: async (requestId) => {
+        try {
+          const res = await axiosInstance.post(`/chat-requests/${requestId}/accept`);
+          // chat:started socket event will set activeConversation
+          set({ incomingRequest: null });
+          return res.data;
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Failed to accept request");
+          return null;
+        }
+      },
+
+      rejectRequest: async (requestId) => {
+        try {
+          await axiosInstance.post(`/chat-requests/${requestId}/reject`);
+          set({ incomingRequest: null });
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Failed to reject request");
+        }
+      },
+
+      // ─── Conversation ────────────────────────────────────────────────────
+
+      fetchMessages: async (conversationId) => {
         set({ isMessagesLoading: true });
         try {
-          const res = await axiosInstance.get(`/messages/${userId}`);
+          const res = await axiosInstance.get(`/conversations/${conversationId}/messages`);
           set({ messages: res.data });
-        } catch (error) {
-          toast.error(error.response?.data?.message || "Failed to load messages");
+        } catch (err) {
+          console.error("[Chat] fetchMessages:", err.message);
         } finally {
           set({ isMessagesLoading: false });
         }
       },
 
-      sendMessage: async (messageData) => {
-        const { selectedUser, messages } = get();
-        if (!selectedUser) return false;
+      sendMessage: async (text) => {
+        const { activeConversation } = get();
+        if (!activeConversation) return false;
 
+        set({ isSendingMessage: true });
         try {
-          const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-          set({ messages: [...messages, res.data], composerText: "" });
-          get().getConversations();
+          await axiosInstance.post(
+            `/conversations/${activeConversation.conversationId}/messages`,
+            { text }
+          );
+          set({ composerText: "" });
           return true;
-        } catch (error) {
-          toast.error(error.response?.data?.message || "Failed to send message");
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Failed to send message");
           return false;
+        } finally {
+          set({ isSendingMessage: false });
         }
       },
 
-      subscribeToMessages: (userId) => {
-        if (!userId) return;
-
-        const socket = useAuthStore.getState().socket;
-        if (!socket) return;
-
-        socket.off("newMessage");
-        socket.on("newMessage", (newMessage) => {
-          // if im not the receiver don't do anything just return
-          if (String(newMessage.senderId) !== String(userId)) return;
-
-          set({ messages: [...get().messages, newMessage] });
-
-          get().getConversations();
-        });
-      },
-
-      unsubscribeFromMessages: () => {
-        const socket = useAuthStore.getState().socket;
-        socket?.off("newMessage");
-      },
-
-      setSelectedUser: (selectedUser) => set({ selectedUser }),
-
-      setActiveConversationId: (activeConversationId) => {
-        set((state) => ({
-          activeConversationId,
-          selectedUser:
-            state.users.find((user) => user._id === activeConversationId) ||
-            state.conversations.find((user) => user._id === activeConversationId) ||
-            null,
-          messages: activeConversationId ? state.messages : [],
-        }));
-      },
-
-      setSearchQuery: (searchQuery) => set({ searchQuery }),
-      setSidebarTab: (sidebarTab) => set({ sidebarTab }),
-      setComposerText: (composerText) => set({ composerText }),
-      setSoundEnabled: (isSoundEnabled) => set({ isSoundEnabled }),
-
-      sendTextMessage: async (conversationId) => {
-        const messageText = get().composerText.trim();
-        if (!conversationId || !messageText) return false;
-
-        return get().sendMessage({ text: messageText });
-      },
-
-      sendMediaMessage: async ({ conversationId, file }) => {
-        if (!conversationId || !file) return false;
+      sendMediaMessage: async (file) => {
+        const { activeConversation } = get();
+        if (!activeConversation || !file) return false;
 
         const formData = new FormData();
         formData.append("media", file);
 
         set({ isSendingMedia: true });
         try {
-          return await get().sendMessage(formData);
+          await axiosInstance.post(
+            `/conversations/${activeConversation.conversationId}/messages`,
+            formData
+          );
+          return true;
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Failed to upload media");
+          return false;
         } finally {
           set({ isSendingMedia: false });
         }
       },
+
+      endConversation: async () => {
+        const { activeConversation } = get();
+        if (!activeConversation) return;
+
+        try {
+          await axiosInstance.post(
+            `/conversations/${activeConversation.conversationId}/end`
+          );
+          // chat:ended socket event will clear state
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Failed to end conversation");
+        }
+      },
+
+      // ─── Socket event handlers (called from useAuthStore socket listeners) ──
+
+      setAvailableUsers: (users) => set({ availableUsers: users }),
+
+      setIncomingRequest: (data) => set({ incomingRequest: data }),
+
+      setOutgoingRequest: (data) => set({ outgoingRequest: data }),
+
+      handleRequestRejected: ({ fromUsername }) => {
+        set({ outgoingRequest: null });
+        toast(`${fromUsername} declined the chat request.`, { icon: "👋" });
+      },
+
+      handleChatStarted: ({ conversationId, partnerUsername }) => {
+        set({
+          activeConversation: { conversationId, partnerUsername },
+          incomingRequest: null,
+          outgoingRequest: null,
+          messages: [],
+          isPartnerDisconnected: false,
+          isPartnerTyping: false,
+        });
+      },
+
+      handleChatEnded: () => {
+        get().clearConversationState();
+      },
+
+      // myId is passed in from useAuthStore to avoid circular import
+      handleIncomingMessage: (message, myId) => {
+        const { activeConversation } = get();
+        if (!activeConversation) return;
+
+        const role = String(message.senderId) === String(myId) ? "me" : "them";
+
+        set((state) => ({
+          messages: [
+            ...state.messages,
+            { ...message, role },
+          ],
+        }));
+      },
+
+      setPartnerTyping: (isTyping) => set({ isPartnerTyping: isTyping }),
+
+      setPartnerDisconnected: (val) => set({ isPartnerDisconnected: val }),
+
+      setComposerText: (composerText) => set({ composerText }),
+      setSoundEnabled: (isSoundEnabled) => set({ isSoundEnabled }),
+
+      // ─── Typing indicators ────────────────────────────────────────────────
+
+      emitTyping: () => {
+        const socket = useAuthStore.getState().socket;
+        const { activeConversation } = get();
+        if (socket && activeConversation) {
+          socket.emit("chat:typing", { conversationId: activeConversation.conversationId });
+        }
+      },
+
+      emitStopTyping: () => {
+        const socket = useAuthStore.getState().socket;
+        const { activeConversation } = get();
+        if (socket && activeConversation) {
+          socket.emit("chat:stop-typing", { conversationId: activeConversation.conversationId });
+        }
+      },
+
+      // ─── Cleanup ──────────────────────────────────────────────────────────
+
+      clearConversationState: () => {
+        set({
+          activeConversation: null,
+          messages: [],
+          composerText: "",
+          isPartnerTyping: false,
+          isPartnerDisconnected: false,
+          isSendingMessage: false,
+          isSendingMedia: false,
+        });
+      },
     }),
     {
-      name: "imessage-storage",
+      name: "anon-chat-prefs",
+      // Only persist sound preference — never persist conversation data
       partialize: (state) => ({ isSoundEnabled: state.isSoundEnabled }),
-    },
-  ),
+    }
+  )
 );
