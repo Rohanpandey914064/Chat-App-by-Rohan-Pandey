@@ -1,14 +1,31 @@
-﻿# 💬 ChatApp — Real-Time Full-Stack Messaging
+<div align="center">
+  <img src="Frontend/public/logo.png" alt="Shadowtalk Logo" width="100" />
+  <h1>Shadowtalk</h1>
+  <p><strong>Private · Anonymous · Real-Time Full-Stack Messaging</strong></p>
 
-![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)
-![Socket.io](https://img.shields.io/badge/Socket.io-4-010101?logo=socket.io&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Multistage-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/License-ISC-blue)
+  <p>
+    <a href="#-features">Features</a> •
+    <a href="#%EF%B8%8F-architecture">Architecture</a> •
+    <a href="#-tech-stack">Tech Stack</a> •
+    <a href="#-quick-start-local-development">Quick Start</a> •
+    <a href="#-docker-deployment">Docker</a> •
+    <a href="#-api-reference">API</a>
+  </p>
 
-A production-ready, real-time chat application built as a **monolithic Docker image** — Vite SPA served by the same Express server that powers the API and WebSocket layer.
+  ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
+  ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+  ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+  ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)
+  ![Socket.io](https://img.shields.io/badge/Socket.io-4-010101?logo=socket.io&logoColor=white)
+  ![Docker](https://img.shields.io/badge/Docker-Multistage-2496ED?logo=docker&logoColor=white)
+  ![License](https://img.shields.io/badge/License-ISC-blue)
+</div>
+
+---
+
+**Shadowtalk** is a privacy-first, real-time anonymous chat application built as a **monolithic Docker image** — Vite React SPA served by the same Express server powering the API, WebSocket layer, and temporary conversation matchmaking.
+
+> *"Talk freely. Stay anonymous. No judgment, no permanent history."*
 
 ---
 
@@ -16,13 +33,14 @@ A production-ready, real-time chat application built as a **monolithic Docker im
 
 | Category | Details |
 |---|---|
-| 💬 **Real-time Messaging** | Instant delivery via Socket.io WebSockets |
+| 🥷 **Anonymous Identity** | Auto-generated disposable usernames & private sessions |
+| 💬 **Real-time Messaging** | Instant delivery & live typing indicators via Socket.io WebSockets |
+| 🤝 **Lobby & Requests** | Discover available users, send chat requests, accept/decline in real time |
 | 🔐 **Authentication** | Passwordless auth powered by [Clerk](https://clerk.com) |
-| 🟢 **Online Presence** | Live online/offline status for all users |
-| 🖼️ **Media Sharing** | Upload and share images & videos (ImageKit CDN) |
-| 📜 **Message History** | Paginated conversation history from MongoDB |
-| 🎨 **Themed UI** | Dark/light mode + wallpaper backgrounds via HeroUI |
-| 🐳 **Docker Ready** | 3-stage optimised build, ships a lean runtime image |
+| 🟢 **Online Presence** | Live online/offline status in the anonymous lobby |
+| 🖼️ **Media Sharing** | Upload and share images & attachments securely |
+| 🎨 **Customization** | Glassmorphic UI with dynamic wallpapers, theme presets & dark/light toggle |
+| 🐳 **Docker Ready** | 3-stage optimized build, single lean container deployment |
 | ⏰ **Health Cron** | Self-ping every 14 min — keeps free-tier hosts awake |
 
 ---
@@ -92,7 +110,7 @@ ImageKit CDN   ←→  Multer upload middleware
 
 ```bash
 git clone <your-repo-url>
-cd chatting-app
+cd shadowtalk
 
 # Backend
 cd Backend && npm install
@@ -107,7 +125,7 @@ cd ../Frontend && npm install
 
 ```env
 # Required
-MONGO_URI=mongodb://localhost:27017/chatting-app
+MONGO_URI=mongodb://localhost:27017/shadowtalk
 CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxxxxxxxxxxxx
 
 # Optional (defaults shown)
@@ -161,7 +179,7 @@ The included `Dockerfile` uses a **3-stage build**:
 ```bash
 docker build \
   --build-arg VITE_CLERK_PUBLISHABLE_KEY=pk_live_xxxxxxxxx \
-  -t chatting-app:latest \
+  -t shadowtalk:latest \
   .
 ```
 
@@ -170,12 +188,12 @@ docker build \
 ```bash
 docker run -d \
   -p 3001:3001 \
-  -e MONGO_URI="mongodb+srv://user:pass@cluster.mongodb.net/chatapp" \
+  -e MONGO_URI="mongodb+srv://user:pass@cluster.mongodb.net/shadowtalk" \
   -e CLERK_WEBHOOK_SIGNING_SECRET="whsec_xxxxxxxxx" \
   -e NODE_ENV=production \
   -e FRONTEND_URL="https://yourdomain.com" \
-  --name chatting-app \
-  chatting-app:latest
+  --name shadowtalk \
+  shadowtalk:latest
 ```
 
 The app will be available at **http://localhost:3001**.
@@ -206,18 +224,19 @@ The app will be available at **http://localhost:3001**.
 
 ## 🔌 API Reference
 
-### Auth
+### Auth & Users
 | Method | Route | Description |
 |---|---|---|
-| `GET` | `/api/auth/check` | Returns authenticated user profile |
+| `GET` | `/api/auth/check` | Returns authenticated user & anonymous identity |
+| `GET` | `/api/users` | List available users in lobby |
 
-### Messages
+### Requests & Messages
 | Method | Route | Description |
 |---|---|---|
-| `GET` | `/api/messages/users` | List all registered users |
-| `GET` | `/api/messages/conversations` | List your active conversations |
-| `GET` | `/api/messages/:userId` | Fetch message history with a user |
-| `POST` | `/api/messages/send/:userId` | Send a message (text / media) |
+| `POST` | `/api/chat-requests/send` | Send a chat connection request |
+| `POST` | `/api/chat-requests/respond` | Accept / reject an incoming request |
+| `GET` | `/api/messages/:userId` | Fetch session conversation history |
+| `POST` | `/api/messages/send/:userId` | Send anonymous message (text / media) |
 
 ### System
 | Method | Route | Description |
@@ -228,7 +247,9 @@ The app will be available at **http://localhost:3001**.
 ### Socket.io Events
 | Event | Direction | Payload |
 |---|---|---|
-| `newMessage` | Server → Client | Message object |
+| `incomingChatRequest` | Server → Client | Chat request object |
+| `chatRequestResponse` | Server → Client | Accepted / declined status |
+| `newMessage` | Server → Client | Real-time message object |
 | `getOnlineUsers` | Server → Client | `string[]` of online user IDs |
 
 ---
@@ -236,7 +257,7 @@ The app will be available at **http://localhost:3001**.
 ## 📁 Project Structure
 
 ```
-chatting-app/
+shadowtalk/
 ├── Backend/
 │   ├── src/
 │   │   ├── index.js              # Server entry — Express + Socket.io setup
