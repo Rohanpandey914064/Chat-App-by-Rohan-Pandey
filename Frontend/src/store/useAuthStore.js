@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import { io } from "socket.io-client";
+import toast from "react-hot-toast";
+
 
 const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
 
@@ -82,6 +84,10 @@ export const useAuthStore = create((set, get) => ({
 
     socket.on("chat:partner-stop-typing", () => {
       _getChatStore?.().setPartnerTyping(false);
+    });
+
+    socket.on("chat:error", ({ message } = {}) => {
+      toast.error(message || "Something went wrong. Please try again.");
     });
   },
 

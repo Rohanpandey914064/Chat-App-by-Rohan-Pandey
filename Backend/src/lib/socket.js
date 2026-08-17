@@ -33,7 +33,8 @@ export function getSocketId(userId) {
 export { io };
 
 /**
- * Emit the current list of available users to every connected socket.
+ * Emit a personalized list of available users to every connected socket.
+ * Each user receives a list that EXCLUDES themselves — fixing the self-visibility bug.
  * Only broadcasts anonymousUsername — no private data.
  */
 async function broadcastAvailableUsers() {
@@ -43,10 +44,19 @@ async function broadcastAvailableUsers() {
       status: "available",
     }).select("_id anonymousUsername").lean();
 
-    io.emit("users:available", available.map((u) => ({
-      userId: u._id,
+    // Build the full sanitized list once
+    const allAvailable = available.map((u) => ({
+      userId: String(u._id),
       anonymousUsername: u.anonymousUsername,
-    })));
+    }));
+
+    // Emit a personalized (self-excluded) list to each connected socket
+    for (const [connectedUserId, socketId] of userSocketMap.entries()) {
+      const personalizedList = allAvailable.filter(
+        (u) => u.userId !== connectedUserId
+      );
+      io.to(socketId).emit("users:available", personalizedList);
+    }
   } catch (err) {
     console.error("[Socket] broadcastAvailableUsers error:", err.message);
   }

@@ -42,20 +42,20 @@ function LobbyPage() {
   }, [fetchAvailableUsers]);
 
   const handleSendRequest = useCallback(
-    async (userId) => {
-      await sendChatRequest(userId);
+    (userId) => {
+      sendChatRequest(userId);
     },
     [sendChatRequest]
   );
 
-  const handleAccept = useCallback(async () => {
+  const handleAccept = useCallback(() => {
     if (!incomingRequest) return;
-    await acceptRequest(incomingRequest.requestId);
+    acceptRequest(incomingRequest.requestId);
   }, [incomingRequest, acceptRequest]);
 
-  const handleReject = useCallback(async () => {
+  const handleReject = useCallback(() => {
     if (!incomingRequest) return;
-    await rejectRequest(incomingRequest.requestId);
+    rejectRequest(incomingRequest.requestId);
   }, [incomingRequest, rejectRequest]);
 
   const myUsername = authUser?.anonymousUsername ?? "...";

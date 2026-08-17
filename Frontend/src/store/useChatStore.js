@@ -43,15 +43,15 @@ export const useChatStore = create(
         }
       },
 
-      sendChatRequest: async (receiverId) => {
-        try {
-          const res = await axiosInstance.post("/chat-requests", { receiverId });
-          set({ outgoingRequest: { requestId: res.data.requestId, toUsername: res.data.toUsername } });
-          return true;
-        } catch (err) {
-          toast.error(err.response?.data?.message || "Failed to send request");
-          return false;
+      sendChatRequest: (receiverId) => {
+        // Use socket event for instant communication — no HTTP round-trip
+        const socket = useAuthStore.getState().socket;
+        if (!socket?.connected) {
+          toast.error("Not connected. Please refresh.");
+          return;
         }
+        socket.emit("chat:request", { receiverId });
+        // outgoingRequest state is set when server emits chat:request-sent back
       },
 
       cancelOutgoingRequest: () => {
@@ -59,25 +59,27 @@ export const useChatStore = create(
         set({ outgoingRequest: null });
       },
 
-      acceptRequest: async (requestId) => {
-        try {
-          const res = await axiosInstance.post(`/chat-requests/${requestId}/accept`);
-          // chat:started socket event will set activeConversation
-          set({ incomingRequest: null });
-          return res.data;
-        } catch (err) {
-          toast.error(err.response?.data?.message || "Failed to accept request");
-          return null;
+      acceptRequest: (requestId) => {
+        // Use socket event — server handles DB + room join + notifies both parties instantly
+        const socket = useAuthStore.getState().socket;
+        if (!socket?.connected) {
+          toast.error("Not connected. Please refresh.");
+          return;
         }
+        set({ incomingRequest: null });
+        socket.emit("chat:accept", { requestId });
+        // chat:started socket event will set activeConversation
       },
 
-      rejectRequest: async (requestId) => {
-        try {
-          await axiosInstance.post(`/chat-requests/${requestId}/reject`);
-          set({ incomingRequest: null });
-        } catch (err) {
-          toast.error(err.response?.data?.message || "Failed to reject request");
+      rejectRequest: (requestId) => {
+        // Use socket event for instant rejection notification to sender
+        const socket = useAuthStore.getState().socket;
+        if (!socket?.connected) {
+          toast.error("Not connected. Please refresh.");
+          return;
         }
+        set({ incomingRequest: null });
+        socket.emit("chat:reject", { requestId });
       },
 
       // ─── Conversation ────────────────────────────────────────────────────
