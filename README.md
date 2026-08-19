@@ -29,7 +29,7 @@
 
 ---
 
-## ✨ Features
+## Features
 
 | Category | Details |
 |---|---|
