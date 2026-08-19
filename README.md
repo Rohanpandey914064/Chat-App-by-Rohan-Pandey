@@ -33,19 +33,19 @@
 
 | Category | Details |
 |---|---|
-| 🥷 **Anonymous Identity** | Auto-generated disposable usernames & private sessions |
-| 💬 **Real-time Messaging** | Instant delivery & live typing indicators via Socket.io WebSockets |
-| 🤝 **Lobby & Requests** | Discover available users, send chat requests, accept/decline in real time |
-| 🔐 **Authentication** | Passwordless auth powered by [Clerk](https://clerk.com) |
-| 🟢 **Online Presence** | Live online/offline status in the anonymous lobby |
-| 🖼️ **Media Sharing** | Upload and share images & attachments securely |
-| 🎨 **Customization** | Glassmorphic UI with dynamic wallpapers, theme presets & dark/light toggle |
-| 🐳 **Docker Ready** | 3-stage optimized build, single lean container deployment |
-| ⏰ **Health Cron** | Self-ping every 14 min — keeps free-tier hosts awake |
+|  **Anonymous Identity** | Auto-generated disposable usernames & private sessions |
+|  **Real-time Messaging** | Instant delivery & live typing indicators via Socket.io WebSockets |
+|  **Lobby & Requests** | Discover available users, send chat requests, accept/decline in real time |
+|  **Authentication** | Passwordless auth powered by [Clerk](https://clerk.com) |
+|  **Online Presence** | Live online/offline status in the anonymous lobby |
+|  **Media Sharing** | Upload and share images & attachments securely |
+|  **Customization** | Glassmorphic UI with dynamic wallpapers, theme presets & dark/light toggle |
+|  **Docker Ready** | 3-stage optimized build, single lean container deployment |
+|  **Health Cron** | Self-ping every 14 min — keeps free-tier hosts awake |
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 Browser
@@ -68,7 +68,7 @@ ImageKit CDN   ←→  Multer upload middleware
 
 ---
 
-## 📦 Tech Stack
+##  Tech Stack
 
 ### Frontend
 | Package | Version | Purpose |
@@ -98,7 +98,7 @@ ImageKit CDN   ←→  Multer upload middleware
 
 ---
 
-## 🚀 Quick Start (Local Development)
+##  Quick Start (Local Development)
 
 ### Prerequisites
 
@@ -164,7 +164,7 @@ npm run dev
 
 ---
 
-## 🐳 Docker Deployment
+##  Docker Deployment
 
 The included `Dockerfile` uses a **3-stage build**:
 
@@ -254,7 +254,7 @@ The app will be available at **http://localhost:3001**.
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 shadowtalk/
@@ -294,7 +294,7 @@ shadowtalk/
 
 ---
 
-## 🔐 Security
+##  Security
 
 - **Clerk JWT** validation on every protected API route
 - **Webhook signature verification** via Svix (prevents spoofed user events)
@@ -305,7 +305,7 @@ shadowtalk/
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 | Symptom | Likely Cause | Fix |
 |---|---|---|
@@ -319,7 +319,7 @@ shadowtalk/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/my-feature`
@@ -329,7 +329,7 @@ shadowtalk/
 
 ---
 
-## 📜 License
+##  License
 
 Distributed under the **ISC License**.
 
